@@ -12,10 +12,6 @@ Equal_(void *p1, void *p2, int n)
 	return Result;
 }
 
-#ifndef PRINTFN
-#define PRINTFN(...) printf(__VA_ARGS__)
-#endif// PRINTFN
-
 	// Tests[i].Level=Tests[GlobalTestSweetParent].Level+1; 
 #define SWEET_ADDSKIP(i, m) \
 	Tests[i].Parent=GlobalTestSweetParent; \
@@ -41,13 +37,23 @@ Equal_(void *p1, void *p2, int n)
 #define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);}while(0);
 #define EndTestGroup() do{GlobalTestSweetParent=Tests[GlobalTestSweetParent].Parent;}while(0)
 
-#define ANSI_RED     "\x1b[31m"
-#define ANSI_GREEN   "\x1b[32m"
-#define ANSI_YELLOW  "\x1b[33m"
-#define ANSI_BLUE    "\x1b[34m"
-#define ANSI_MAGENTA "\x1b[35m"
-#define ANSI_CYAN    "\x1b[36m"
-#define ANSI_RESET   "\x1b[0m"
+#define ANSI_RESET      "\x1b[0m"
+#define ANSI_BLACK      "\x1b[30m"
+#define ANSI_RED        "\x1b[31m"
+#define ANSI_GREEN      "\x1b[32m"
+#define ANSI_YELLOW     "\x1b[33m"
+#define ANSI_BLUE       "\x1b[34m"
+#define ANSI_MAGENTA    "\x1b[35m"
+#define ANSI_CYAN       "\x1b[36m"
+#define ANSI_WHITE      "\x1b[37m"
+#define ANSI_BR_BLACK   "\x1b[90m"
+#define ANSI_BR_RED     "\x1b[91m"
+#define ANSI_BR_GREEN   "\x1b[92m"
+#define ANSI_BR_YELLOW  "\x1b[93m"
+#define ANSI_BR_BLUE    "\x1b[94m"
+#define ANSI_BR_MAGENTA "\x1b[95m"
+#define ANSI_BR_CYAN    "\x1b[96m"
+#define ANSI_BR_WHITE   "\x1b[97m"
 
 typedef enum test_sweet_status
 {
@@ -82,6 +88,7 @@ static inline unsigned int
 SweetNumParents(unsigned int i)
 {
 	unsigned int cParents = 0;
+	i = Tests[i].Parent;
 	while(i)
 	{
 		++cParents;
@@ -89,9 +96,14 @@ SweetNumParents(unsigned int i)
 	}
 	return cParents;
 }
-static void
-SweetGroup(unsigned int i)
+
+static inline void
+Sweet_Indent(unsigned int n)
 {
+	fputs(ANSI_WHITE, stdout);
+	for(unsigned int iIndent = n; iIndent; --iIndent)
+	{ fputs("|   ", stdout); }
+	fputs(ANSI_RESET, stdout);
 }
 
 // returns number of failed atomic tests (doesn't count groups)
@@ -135,13 +147,12 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		}
 	}
 
-	unsigned int PrevLevel = 0;
 	unsigned int cL1Fail = 0, cL1Pass = 0;
 	for(unsigned int iTest = 1; iTest < cTests; ++iTest)
 	{ // print out status and calculate/print group summary
-		if(IsGroupOfTests(iTest)) { puts(""); }
 		test Test = Tests[iTest];
-		int cIndents = SweetNumParents(iTest);
+		int cParents = SweetNumParents(iTest);
+		if(IsGroupOfTests(iTest)) { Sweet_Indent(cParents); fputc('\n', stdout); }
 		if(Test.Parent == 0 && Test.Status == SWEET_STATUS_Pass) { ++cL1Pass; }
 		if(Test.Parent == 0 && Test.Status == SWEET_STATUS_Fail) { ++cL1Fail; }
 
@@ -158,10 +169,10 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 				TestStatus = '?'; TestColour = ANSI_MAGENTA "ERROR: UNKNOWN STATUS! ";
 		}
 
-		PRINTFN("%*.d%s[%c] %s"ANSI_RESET"\n", 4*(cIndents-1),0, TestColour, TestStatus, Test.Message);
+		Sweet_Indent(cParents);
+		printf("%s[%c] %s"ANSI_RESET"\n", TestColour, TestStatus, Test.Message);
 
 		unsigned int iParent = Test.Parent;
-		int IsFinalTest = 0;//iTest == cTests-1; 
 		if(Tests[iTest+1].Parent < iParent) // end of group
 		{ // calculate annd append summary of group
 			do // repeat if dropping multiple levels
@@ -185,8 +196,12 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 				}
 				if(cGPass || cGFail) // ignore skipped groups
 				{ // print group summary
-					printf("%*.d%sChildren: %u/%u    Descendants: %u/%u"ANSI_RESET"\n\n", 4*(SweetNumParents(iParent)-1),0,
+					unsigned int cIndents = SweetNumParents(iParent);
+					Sweet_Indent(cIndents);
+					printf("%sChildren: %u/%u    Descendants: %u/%u"ANSI_RESET"\n",
 							cGFail ? ANSI_RED : ANSI_GREEN, cGPass, cGPass+cGFail, cIPass, cIPass+cIFail);
+					Sweet_Indent(cIndents);
+					fputc('\n', stdout);
 				}
 				iParent = Tests[iParent].Parent;
 			}

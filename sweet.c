@@ -19,7 +19,7 @@ main(int argc, char **argv)
 	EndTestGroup();
 	TestGroup("Full test suite")
 	{
-		TestGroup("Skip group")
+		SkipTestGroup("Skip group")
 		{
 			Test(x == y);
 			TestOp(x, !=, y);
