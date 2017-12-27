@@ -90,7 +90,7 @@ SweetNumParents(unsigned int i)
 	return cParents;
 }
 static void
-SweetPrintGroup(unsigned int i)
+SweetGroup(unsigned int i)
 {
 }
 
@@ -103,7 +103,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 	Tests[0].Status = SWEET_STATUS_Pass;
 
 	unsigned int cFail = 0, cPass = 0;
-	puts("\n");
+	if( ! IsGroupOfTests(1)) { puts(""); }
 	for(unsigned int i = 1; i < cTests; ++i)
 	{ // update skip/fail status based on others in hierarchy
 		test Test = Tests[i];
@@ -139,6 +139,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 	unsigned int cL1Fail = 0, cL1Pass = 0;
 	for(unsigned int i = 1; i < cTests; ++i)
 	{ // print out status
+		if(IsGroupOfTests(i)/*&& Tests[i].Parent != i-1*/) { puts(""); }
 		test Test = Tests[i];
 		int cIndents = SweetNumParents(i);
 		if(Test.Parent == 0 && Test.Status == SWEET_STATUS_Pass) { ++cL1Pass; }
@@ -166,8 +167,6 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 			do // repeat if dropping multiple levels
 			{
 				unsigned int cGPass = 0, cGFail = 0, iGroup = i;
-				/* printf("iGroup: %u, Parent: %u vs %u\n", iGroup, Tests[iGroup].Parent, iParent); */
-				/* printf("i: %u, cTests: %u\n", i, cTests); */
 				while(Tests[iGroup].Parent >= iParent) // includes subtests
 				{ // go back through all of group (and their subtests)
 					if(Tests[iGroup].Parent == iParent) // does not include subtests
@@ -177,7 +176,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 					}
 					--iGroup;
 				}
-				printf("%*.d%sPassed: %u/%u"ANSI_RESET"\n\n", 4*(SweetNumParents(iParent) - IsFinalTest),0,
+				printf("%*.d%sPassed: %u/%u"ANSI_RESET"\n\n", 4*(SweetNumParents(iParent)-1),0,
 						cGFail ? ANSI_RED : ANSI_GREEN, cGPass, cGPass + cGFail);
 				if(IsFinalTest) { break; }
 				iParent = Tests[iParent].Parent;
@@ -186,9 +185,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		}
 
 	}
-	printf("%sPassed: %u/%u (%u/%u)"ANSI_RESET"\n\n", cL1Fail ? ANSI_RED : ANSI_GREEN,
-			cL1Pass, cL1Pass+cL1Fail, cPass, cPass+cFail);
-	puts("\n");
+	printf("%sIndividual tests: %u/%u"ANSI_RESET"\n\n", cL1Fail ? ANSI_RED : ANSI_GREEN, cPass, cPass+cFail);
 	return cFail;
 }
 
