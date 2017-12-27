@@ -14,9 +14,12 @@ main(int argc, char **argv)
 	int x = 1;
 	int y = 1;
 	/* printf("Global parent: %u\n", GlobalTestSweetParent); */
+	TestGroup("Single Test");
+	TestOp(x, >=, y);
+	EndTestGroup();
 	TestGroup("Full test suite")
 	{
-		SkipTestGroup("Skip group")
+		TestGroup("Skip group")
 		{
 			Test(x == y);
 			TestOp(x, !=, y);
@@ -46,7 +49,6 @@ main(int argc, char **argv)
 			}
 			EndTestGroup();
 		}
-		TestOp(x, >=, y);
 	} EndTestGroup();
 
 	return PrintTestResults();
