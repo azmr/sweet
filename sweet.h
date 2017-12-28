@@ -3,6 +3,8 @@
 // - option to not print subtests for skipped groups?
 // - summary of passes and fails by file
 // - define no colour
+// - proper stack?
+// - move to default skip rather than pass/fail
 
 #define Equal(a, b) (sizeof(a) <= sizeof(double) ? ((a) == (b)) : \
 					sizeof(a) != sizeof(b) ? 0 : \
@@ -41,7 +43,7 @@ Equal_(void *p1, void *p2, int n)
 #define SkipTestEq(a, e)     do{SWEET_ADDSKIP(__COUNTER__,             #a" == "#e   );}while(0)
 #define SkipTestVEq(a, e)    do{SWEET_ADDSKIP(__COUNTER__,             #a" == "#e   );}while(0)
 
-#define TestGroup_(i, m) SWEET_ADDTEST(i, 1, m); GlobalTestSweetParent = i
+#define TestGroup_(i, m) SWEET_ADDTEST(i, 1, m); if(i > GlobalTestSweetParent) GlobalTestSweetParent = i
 #define TestGroup(m) do{TestGroup_(__COUNTER__, m);}while(0);
 #define SkipTestGroup_(i, m) SWEET_ADDSKIP(i, m); GlobalTestSweetParent = i
 #define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);}while(0);
@@ -169,7 +171,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		int cParents = Sweet_NumParents(iTest);
 		int IsGroup = Sweet_IsGroup(iTest);
 		if(IsGroup) { Sweet_Indent(cParents); fputc('\n', SWEET_OUTFILE); }
-		if(Test.Filename != Tests[iTest-1].Filename)
+		if(Test.Filename && Test.Filename != Tests[iTest-1].Filename)
 		{ // print underlined filename
 			fprintf(SWEET_OUTFILE, "%s\n", Test.Filename);
 			for(int i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
@@ -189,7 +191,8 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		}
 
 		Sweet_Indent(cParents);
-		fprintf(SWEET_OUTFILE, "%s[%c] %s"ANSI_RESET"\n", TestColour, TestStatus, Test.Message);
+		fprintf(SWEET_OUTFILE, "%s[%c] %s"ANSI_RESET"\n", TestColour, TestStatus,
+				Test.Message ? Test.Message : "** test code not hit **");
 
 		unsigned int iParent = Test.Parent;
 		if(Tests[iTest+1].Parent < iParent) // end of group

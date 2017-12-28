@@ -19,6 +19,19 @@ SameFileTests()
 	EndTestGroup();
 }
 
+static void
+SameFileUnhitTests()
+{
+	if(0)
+	{
+		TestGroup("Same file function unhit tests");
+		{
+			TestOp(sizeof(char*), >=, sizeof(int));
+		}
+		EndTestGroup();
+	}
+}
+
 int
 main(int argc, char **argv)
 {
@@ -27,10 +40,11 @@ main(int argc, char **argv)
 	/* printf("Global parent: %u\n", GlobalTestSweetParent); */
 	TestGroup("Single Test");
 	TestOp(x, >=, y);
+	SameFileUnhitTests();
+	SameFileTests();
 	EndTestGroup();
 	TestGroup("Full test suite")
 	{
-		SameFileTests();
 		SkipTestGroup("Skip group")
 		{
 			Test(x == y);
@@ -61,9 +75,9 @@ main(int argc, char **argv)
 			}
 			EndTestGroup();
 		}
-	TestsInIncludedFile();
 	TestOp(x, <=, y);
 	} EndTestGroup();
+	TestsInIncludedFile();
 
 
 	return PrintTestResults();
