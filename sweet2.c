@@ -3,7 +3,7 @@ TestsInIncludedFile()
 {
 	int a = 1, b = 2;
 
-	TestGroup("Full test suite")
+	TestGroup("Included test suite")
 	{
 		Test(a == b);
 		Test(a != b);
