@@ -89,7 +89,7 @@ static inline unsigned int
 Sweet_NumParents(unsigned int i)
 {
 	unsigned int cParents = 0;
-	while(i = Tests[i].Parent) { ++cParents; }
+	while((i = Tests[i].Parent)) { ++cParents; }
 	return cParents;
 }
 
@@ -117,7 +117,7 @@ Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass
 		unsigned int cITotal = cIPass+cIFail;
 		printf("%sPassed: %u/%u (%5.1f%%)    [ %u/%u (%5.1f%%) ]"ANSI_RESET"\n", ColourString,
 				cGPass, cGTotal, 100.0*(double)cGPass/(double)cGTotal,
-				cIPass, cITotal, 100.0*(double)cGPass/(double)cGTotal);
+				cIPass, cITotal, 100.0*(double)cIPass/(double)cITotal);
 	}
 }
 
@@ -145,7 +145,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 			case SWEET_STATUS_Fail:
 			{ // propogate failures up the hierarchy
 				unsigned int iParent = i;
-				while(iParent = Tests[iParent].Parent)
+				while((iParent = Tests[iParent].Parent))
 				{ Tests[iParent].Status = SWEET_STATUS_Fail; }
 			} break;
 
@@ -176,8 +176,8 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 			fprintf(SWEET_OUTFILE, "\n\n");
 		}
 
-		if(Test.Parent == 0 && Test.Status == SWEET_STATUS_Pass) { ++cOGPass; if(!IsGroup) ++cOIPass; }
-		if(Test.Parent == 0 && Test.Status == SWEET_STATUS_Fail) { ++cOGFail; if(!IsGroup) ++cOIFail; }
+		if(Test.Status == SWEET_STATUS_Pass) { if(Test.Parent == 0) ++cOGPass; if(!IsGroup) ++cOIPass; }
+		if(Test.Status == SWEET_STATUS_Fail) { if(Test.Parent == 0) ++cOGFail; if(!IsGroup) ++cOIFail; }
 
 		char TestStatus, *TestColour;
 		switch(Test.Status)
