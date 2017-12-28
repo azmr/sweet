@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "../macros/macro.h"
 #include "sweet.h"
+#include "sweet2.c"
 
 typedef struct t
 {
@@ -49,7 +50,10 @@ main(int argc, char **argv)
 			}
 			EndTestGroup();
 		}
+	TestsInIncludedFile();
+	TestOp(x, <=, y);
 	} EndTestGroup();
+
 
 	return PrintTestResults();
 }

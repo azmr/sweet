@@ -20,12 +20,15 @@ Equal_(void *p1, void *p2, int n)
 #define SWEET_OUTFILE stdout
 #endif//SWEET_OUTFILE
 
+// NOTE: i < Parent if in separate file - this just resets to no parent
 #define SWEET_ADDSKIP(i, m) \
-	Tests[i].Parent=GlobalTestSweetParent; \
+	Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
+	Tests[i].Filename=__FILE__; \
 	Tests[i].Status=SWEET_STATUS_Skip; \
 	Tests[i].Message=m
 #define SWEET_ADDTEST(i, s, m) \
-	Tests[i].Parent=GlobalTestSweetParent; \
+	Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
+	Tests[i].Filename=__FILE__; \
 	Tests[i].Status=!!(s); \
 	Tests[i].Message=m
  /* 0-1 = fail/pass - skip dealt with elsewhere */
@@ -76,6 +79,7 @@ typedef struct test test;
 struct test
 {
 	char *Message;
+	char *Filename;
 	unsigned int Parent;
 	int Status;
 };
@@ -189,6 +193,13 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		test Test = Tests[iTest];
 		int cParents = Sweet_NumParents(iTest);
 		if(Sweet_IsGroup(iTest)) { Sweet_Indent(cParents); fputc('\n', SWEET_OUTFILE); }
+		if(Test.Filename != Tests[iTest-1].Filename)
+		{ // print underlined filename
+			printf("%s\n", Test.Filename);
+			for(int i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
+			fprintf(SWEET_OUTFILE, "\n\n");
+		}
+
 		if(Test.Parent == 0 && Test.Status == SWEET_STATUS_Pass) { ++cL1Pass; }
 		if(Test.Parent == 0 && Test.Status == SWEET_STATUS_Fail) { ++cL1Fail; }
 
@@ -235,7 +246,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		}
 
 	}
-	fputs("Overall:\n", SWEET_OUTFILE);
+	fputs("\n========\nOverall:\n========\n", SWEET_OUTFILE);
 	Sweet_PrintSummary(cL1Pass, cL1Fail, cPass, cFail);
 	fputc('\n', SWEET_OUTFILE);
 	return cFail;
