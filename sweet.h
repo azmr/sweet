@@ -4,7 +4,6 @@
 // - summary of passes and fails by file
 // - define no colour
 // - proper stack?
-// - move to default skip rather than pass/fail
 
 #define Equal(a, b) (sizeof(a) <= sizeof(double) ? ((a) == (b)) : \
 					sizeof(a) != sizeof(b) ? 0 : \
@@ -31,7 +30,7 @@ Equal_(void *p1, void *p2, int n)
 #define SWEET_ADDTEST(i, s, m) \
 	Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
 	Tests[i].Filename=__FILE__; \
-	Tests[i].Status=!!(s); \
+	Tests[i].Status=(s) ? SWEET_STATUS_Pass : SWEET_STATUS_Fail; \
 	Tests[i].Message=m
  /* 0-1 = fail/pass - skip dealt with elsewhere */
 #define Test(exp)            do{SWEET_ADDTEST(__COUNTER__, exp,        #exp         );}while(0)
@@ -43,7 +42,7 @@ Equal_(void *p1, void *p2, int n)
 #define SkipTestEq(a, e)     do{SWEET_ADDSKIP(__COUNTER__,             #a" == "#e   );}while(0)
 #define SkipTestVEq(a, e)    do{SWEET_ADDSKIP(__COUNTER__,             #a" == "#e   );}while(0)
 
-#define TestGroup_(i, m) SWEET_ADDTEST(i, 1, m); if(i > GlobalTestSweetParent) GlobalTestSweetParent = i
+#define TestGroup_(i, m) SWEET_ADDTEST(i, SWEET_STATUS_Pass, m); if(i > GlobalTestSweetParent) GlobalTestSweetParent = i
 #define TestGroup(m) do{TestGroup_(__COUNTER__, m);}while(0);
 #define SkipTestGroup_(i, m) SWEET_ADDSKIP(i, m); GlobalTestSweetParent = i
 #define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);}while(0);
@@ -58,11 +57,10 @@ Equal_(void *p1, void *p2, int n)
 
 typedef enum test_sweet_status
 {
-	SWEET_STATUS_Fail = 0,
+	SWEET_STATUS_Undefined = 0,
+	SWEET_STATUS_Fail,
 	SWEET_STATUS_Pass,
 	SWEET_STATUS_Skip,
-
-	SWEET_STATUS_Count,
 } test_sweet_status;
 
 struct test;
@@ -105,22 +103,17 @@ Sweet_Indent(unsigned int n)
 }
 
 static inline void
-Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass, unsigned int cIFail)
+Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass, unsigned int cIFail, unsigned int cMissed)
 {
 	char *ColourString = cGFail ? ANSI_RED : ANSI_GREEN;
 	unsigned int cGTotal = cGPass+cGFail;
-	if(cGPass == cIPass && cGFail == cIFail)
-	{
-		fprintf(SWEET_OUTFILE, "%sPassed: %u/%u (%5.1f%%)"ANSI_RESET"\n", ColourString,
-				cGPass, cGTotal, 100.0*(double)cGPass/(double)cGTotal);
-	}
-	else
-	{
-		unsigned int cITotal = cIPass+cIFail;
-		fprintf(SWEET_OUTFILE, "%sPassed: %u/%u (%5.1f%%)    [ %u/%u (%5.1f%%) ]"ANSI_RESET"\n", ColourString,
-				cGPass, cGTotal, 100.0*(double)cGPass/(double)cGTotal,
-				cIPass, cITotal, 100.0*(double)cIPass/(double)cITotal);
-	}
+	unsigned int cITotal = cIPass+cIFail;
+	fprintf(SWEET_OUTFILE, "%sPassed: %u/%u (%5.1f%%)", ColourString,
+			cGPass, cGTotal, 100.0*(double)cGPass/(double)cGTotal);
+	if(cGPass != cIPass || cGFail != cIFail)
+	{ fprintf(SWEET_OUTFILE, "    [ %u/%u (%5.1f%%) ]", cIPass, cITotal, 100.0*(double)cIPass/(double)cITotal); }
+	if(cMissed) { fprintf(SWEET_OUTFILE, "    Missed: %u", cMissed); }
+	fprintf(SWEET_OUTFILE, ANSI_RESET"\n");
 }
 
 static inline void
@@ -144,14 +137,15 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		test Test = Tests[i];
 		switch(Test.Status)
 		{
+			case SWEET_STATUS_Undefined:
+			case SWEET_STATUS_Pass: /* do nothing */ break;
+
 			case SWEET_STATUS_Fail:
 			{ // propogate failures up the hierarchy
 				unsigned int iParent = i;
 				while((iParent = Tests[iParent].Parent))
 				{ Tests[iParent].Status = SWEET_STATUS_Fail; }
 			} break;
-
-			case SWEET_STATUS_Pass: /* do nothing */ break;
 
 			case SWEET_STATUS_Skip:
 			{ // propogate skipping down the hierarchy
@@ -164,7 +158,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		}
 	}
 
-	unsigned int cOGFail = 0, cOGPass = 0, cOIFail = 0, cOIPass = 0;
+	unsigned int cOGFail = 0, cOGPass = 0, cOIFail = 0, cOIPass = 0, cMissed = 0;
 	for(unsigned int iTest = 1; iTest < cTests; ++iTest)
 	{ // print out status and calculate/print group summary
 		test Test = Tests[iTest];
@@ -178,16 +172,17 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 			fprintf(SWEET_OUTFILE, "\n\n");
 		}
 
-		if(Test.Status == SWEET_STATUS_Pass) { if(Test.Parent == 0) ++cOGPass; if(!IsGroup) ++cOIPass; }
-		if(Test.Status == SWEET_STATUS_Fail) { if(Test.Parent == 0) ++cOGFail; if(!IsGroup) ++cOIFail; }
-
-		char TestStatus, *TestColour;
+		char TestStatus, *TestColour = "";
 		switch(Test.Status)
 		{ // set status character and colour
-			case SWEET_STATUS_Fail: TestStatus = 'X'; TestColour = ANSI_RED;    break;
-			case SWEET_STATUS_Pass: TestStatus = '/'; TestColour = ANSI_GREEN;  break;
-			case SWEET_STATUS_Skip: TestStatus = '-'; TestColour = ANSI_YELLOW; break;
-			default:                TestStatus = '?'; TestColour = ANSI_MAGENTA "ERROR: UNKNOWN STATUS! ";
+			case SWEET_STATUS_Fail: if(!Test.Parent) ++cOGFail; if(!IsGroup) ++cOIFail;
+									TestStatus = 'X'; TestColour = ANSI_RED;     break;
+			case SWEET_STATUS_Pass: if(!Test.Parent) ++cOGPass; if(!IsGroup) ++cOIPass;
+									TestStatus = '/'; TestColour = ANSI_GREEN;   break;
+			case SWEET_STATUS_Skip: TestStatus = '-'; TestColour = ANSI_YELLOW;  break;
+			case SWEET_STATUS_Undefined: TestStatus = '?';
+				 if(!TestColour[0]) { TestColour = ANSI_YELLOW; ++cMissed; } break;
+			default:                TestStatus = '!'; TestColour = ANSI_MAGENTA "ERROR: UNKNOWN STATUS! ";
 		}
 
 		Sweet_Indent(cParents);
@@ -210,7 +205,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 				{ // print group summary
 					unsigned int cIndents = Sweet_NumParents(iParent);
 					Sweet_Indent(cIndents);
-					Sweet_PrintSummary(cGPass, cGFail, cIPass, cIFail);
+					Sweet_PrintSummary(cGPass, cGFail, cIPass, cIFail, 0);
 					Sweet_Indent(cIndents);
 					fputc('\n', SWEET_OUTFILE);
 				}
@@ -221,7 +216,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 	}
 
 	fputs("\n========\nOverall:\n========\n", SWEET_OUTFILE);
-	Sweet_PrintSummary(cOGPass, cOGFail, cOIPass, cOIFail);
+	Sweet_PrintSummary(cOGPass, cOGFail, cOIPass, cOIFail, cMissed);
 	fputc('\n', SWEET_OUTFILE);
 	return cOIFail;
 }
