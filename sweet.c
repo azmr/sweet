@@ -9,6 +9,16 @@ typedef struct t
 	struct t* ptr;
 } t;
 
+static void
+SameFileTests()
+{
+	TestGroup("Same file function tests");
+	{
+		TestOp(sizeof(char*), >=, sizeof(int));
+	}
+	EndTestGroup();
+}
+
 int
 main(int argc, char **argv)
 {
@@ -20,6 +30,7 @@ main(int argc, char **argv)
 	EndTestGroup();
 	TestGroup("Full test suite")
 	{
+		SameFileTests();
 		SkipTestGroup("Skip group")
 		{
 			Test(x == y);
