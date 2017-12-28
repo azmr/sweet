@@ -117,8 +117,19 @@ static inline void
 Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass, unsigned int cIFail)
 {
 	char *ColourString = cGFail ? ANSI_RED : ANSI_GREEN;
-	printf("%sChildren: %u/%u    Descendants: %u/%u"ANSI_RESET"\n",
-			ColourString, cGPass, cGPass+cGFail, cIPass, cIPass+cIFail);
+	unsigned int cGTotal = cGPass+cGFail;
+	if(cGPass == cIPass && cGFail == cIFail)
+	{
+		printf("%sPassed: %u/%u (%5.1f%%)"ANSI_RESET"\n", ColourString,
+				cGPass, cGTotal, 100.0*(double)cGPass/(double)cGTotal);
+	}
+	else
+	{
+		unsigned int cITotal = cIPass+cIFail;
+		printf("%sPassed: %u/%u (%5.1f%%)    [ %u/%u (%5.1f%%) ]"ANSI_RESET"\n", ColourString,
+				cGPass, cGTotal, 100.0*(double)cGPass/(double)cGTotal,
+				cIPass, cITotal, 100.0*(double)cGPass/(double)cGTotal);
+	}
 }
 
 static inline void
