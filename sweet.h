@@ -2,7 +2,7 @@
 // TODO:
 // - option to not print subtests for skipped groups?
 // - summary of passes and fails by file
-// - fix individual %
+// - define no colour
 
 #define Equal(a, b) (sizeof(a) <= sizeof(double) ? ((a) == (b)) : \
 					sizeof(a) != sizeof(b) ? 0 : \
@@ -109,13 +109,13 @@ Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass
 	unsigned int cGTotal = cGPass+cGFail;
 	if(cGPass == cIPass && cGFail == cIFail)
 	{
-		printf("%sPassed: %u/%u (%5.1f%%)"ANSI_RESET"\n", ColourString,
+		fprintf(SWEET_OUTFILE, "%sPassed: %u/%u (%5.1f%%)"ANSI_RESET"\n", ColourString,
 				cGPass, cGTotal, 100.0*(double)cGPass/(double)cGTotal);
 	}
 	else
 	{
 		unsigned int cITotal = cIPass+cIFail;
-		printf("%sPassed: %u/%u (%5.1f%%)    [ %u/%u (%5.1f%%) ]"ANSI_RESET"\n", ColourString,
+		fprintf(SWEET_OUTFILE, "%sPassed: %u/%u (%5.1f%%)    [ %u/%u (%5.1f%%) ]"ANSI_RESET"\n", ColourString,
 				cGPass, cGTotal, 100.0*(double)cGPass/(double)cGTotal,
 				cIPass, cITotal, 100.0*(double)cIPass/(double)cITotal);
 	}
@@ -158,7 +158,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 				{ Tests[iChild].Status = SWEET_STATUS_Skip; }
 			} break;
 
-			default: printf(ANSI_MAGENTA "ERROR: UNKNOWN STATUS at %u" ANSI_RESET, i);
+			default: fprintf(SWEET_OUTFILE, ANSI_MAGENTA "ERROR: UNKNOWN STATUS at %u" ANSI_RESET, i);
 		}
 	}
 
@@ -171,7 +171,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		if(IsGroup) { Sweet_Indent(cParents); fputc('\n', SWEET_OUTFILE); }
 		if(Test.Filename != Tests[iTest-1].Filename)
 		{ // print underlined filename
-			printf("%s\n", Test.Filename);
+			fprintf(SWEET_OUTFILE, "%s\n", Test.Filename);
 			for(int i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
 			fprintf(SWEET_OUTFILE, "\n\n");
 		}
@@ -189,7 +189,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		}
 
 		Sweet_Indent(cParents);
-		printf("%s[%c] %s"ANSI_RESET"\n", TestColour, TestStatus, Test.Message);
+		fprintf(SWEET_OUTFILE, "%s[%c] %s"ANSI_RESET"\n", TestColour, TestStatus, Test.Message);
 
 		unsigned int iParent = Test.Parent;
 		if(Tests[iTest+1].Parent < iParent) // end of group
