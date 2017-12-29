@@ -3,10 +3,10 @@ TestsInIncludedFile()
 {
 	int a = 1, b = 2;
 
-	TestGroup("Included test suite")
+	NewTestGroup("Included test suite")
 	{
 		Test(a == b);
 		Test(a != b);
 		TestOp(a, <=, b);
-	} EndTestGroup;
+	} EndNewTestGroup;
 }
