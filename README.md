@@ -11,6 +11,7 @@ Download `sweet.h` into your project folder, then simply `#include "sweet.h"` in
 ## Usage
 ### Typical usage:
 ```
+// Test types
 Test(expr);          // passes if expr evaluates non-zero
 TestEq(a, b);        // - compares a and b byte-by-byte
                      // - no type checking except sizeof a vs b
@@ -18,6 +19,7 @@ TestEq(a, b);        // - compares a and b byte-by-byte
 TestVEq(a, b);       // does a simple value equal (must be a primitive type)
 TestOp(a, op, b);    // tests a against b with op. e.g. a >= b
 
+// Grouping
 TestGroup("Description of test group")
 { // braces are just for clarity
     // ... tests
@@ -30,6 +32,7 @@ TestGroup("Description of test group")
 
 // ... other stuff
 
+// Printing
 int NumberOfFailedTests = PrintTestResults();
 ```
 
@@ -59,6 +62,23 @@ This means you can determine if your test suite is passing from the command line
 
 ### Within-project testing:
 I'm not sure this is currently recommended, but there's no particular reason this shouldn't work, bearing in mind the limitations below.
+
+### Compile-time options
+Copy, paste and alter the following `#define`s wherever necessary. The defaults are shown here.
+```
+// File to print to
+#define SWEET_OUTFILE stdout
+
+// Assumes used in 1 compilation unit, change to blank/`extern` if desired
+#define SWEET_STATIC static
+
+// Define as blank if `inline` is not supported by your compiler
+#define SWEET_INLINE inline
+
+
+// This is not defined by default. Define as below to remove the ANSI colour escape codes.
+#define SWEET_NOCOLOUR
+```
 
 ### Advanced use:
 See `sweet.c` and `sweet2.c`.
