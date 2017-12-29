@@ -4,6 +4,7 @@
 // - summary of passes and fails by file
 // - define no colour
 // - proper stack?
+// - Generic for equal and print
 
 #define Equal(a, b) (sizeof(a) == sizeof(b) ? Equal_(&(a), &(b), sizeof(a)) : 0)
 static int
@@ -40,18 +41,25 @@ Equal_(void *p1, void *p2, int n)
 #define SkipTestEq(a, e)     do{SWEET_ADDSKIP(__COUNTER__,             #a" == "#e   );}while(0)
 #define SkipTestVEq(a, e)    do{SWEET_ADDSKIP(__COUNTER__,             #a" == "#e   );}while(0)
 
+#define SweetParentReset() do{GlobalTestSweetParentTmp = GlobalTestSweetParent; GlobalTestSweetParent = 0;}while(0)
+#define SweetParentRestore() do{GlobalTestSweetParent = GlobalTestSweetParentTmp;}while(0)
+
 #define TestGroup_(i, m) SWEET_ADDTEST(i, SWEET_STATUS_Pass, m); if(i > GlobalTestSweetParent) GlobalTestSweetParent = i
 #define TestGroup(m) do{TestGroup_(__COUNTER__, m);}while(0);
+#define NewTestGroup(m) SweetParentReset(); TestGroup(m)
 #define SkipTestGroup_(i, m) SWEET_ADDSKIP(i, m); GlobalTestSweetParent = i
 #define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);}while(0);
+#define SkipNewTestGroup(m) SweetParentReset(); SkipTestGroup(m)
 #define EndTestGroup() do{GlobalTestSweetParent=Tests[GlobalTestSweetParent].Parent;}while(0)
+#define EndNewTestGroup() 
+		
 
-#define ANSI_RESET      "\x1b[0m"
-#define ANSI_RED        "\x1b[31m"
-#define ANSI_GREEN      "\x1b[32m"
-#define ANSI_YELLOW     "\x1b[33m"
-#define ANSI_MAGENTA    "\x1b[35m"
-#define ANSI_WHITE      "\x1b[37m"
+#define ANSI_RESET   "\x1b[0m"
+#define ANSI_RED     "\x1b[31m"
+#define ANSI_GREEN   "\x1b[32m"
+#define ANSI_YELLOW  "\x1b[33m"
+#define ANSI_MAGENTA "\x1b[35m"
+#define ANSI_WHITE   "\x1b[37m"
 
 typedef enum test_sweet_status
 {
@@ -72,7 +80,7 @@ struct test
 };
 
 // NOTE: leave initial table entry empty
-static unsigned int GlobalTestSweetParent = __COUNTER__;
+static unsigned int GlobalTestSweetParent = __COUNTER__, GlobalTestSweetParentTmp;
 
 test Tests[];
 

@@ -12,11 +12,11 @@ typedef struct t
 static void
 SameFileTests()
 {
-	TestGroup("Same file function tests");
+	NewTestGroup("Same file function tests");
 	{
 		TestOp(sizeof(char*), >=, sizeof(int));
 	}
-	EndTestGroup();
+	EndNewTestGroup();
 }
 
 static void
@@ -35,9 +35,9 @@ SameFileUnhitTests()
 int
 main(int argc, char **argv)
 {
-	t T1 = {0};
-	t T2 = {0};
-	t T3 = {0};
+	t T1 = {{0}};
+	t T2 = {{0}};
+	t T3 = {{0}};
 	T1.val[1] = 8;
 	T2.val[1] = 8;
 	T3.val[1] = 7;
@@ -46,9 +46,11 @@ main(int argc, char **argv)
 	int x = 1;
 	int y = 1;
 	TestGroup("Single Test");
-	TestOp(x, >=, y);
-	SameFileUnhitTests();
-	SameFileTests();
+	{
+		TestOp(x, >=, y);
+		SameFileUnhitTests();
+		SameFileTests();
+	}
 	EndTestGroup();
 	TestGroup("Full test suite")
 	{
