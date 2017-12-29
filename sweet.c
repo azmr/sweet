@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "../macros/macro.h"
 #include "sweet.h"
 #include "sweet2.c"
 
+#define OffsetOf(type, el) (unsigned long long)(&((type *)0)->el)
 typedef struct t
 {
 	int val[3];
@@ -15,8 +15,7 @@ SameFileTests()
 	NewTestGroup("Same file function tests");
 	{
 		TestOp(sizeof(char*), >=, sizeof(int));
-	}
-	EndNewTestGroup();
+	} EndNewTestGroup;
 }
 
 static void
@@ -27,8 +26,7 @@ SameFileUnhitTests()
 		TestGroup("Same file function unhit tests");
 		{
 			TestOp(sizeof(char*), >=, sizeof(int));
-		}
-		EndTestGroup();
+		} EndTestGroup;
 	}
 }
 
@@ -50,8 +48,7 @@ main(int argc, char **argv)
 		TestOp(x, >=, y);
 		SameFileUnhitTests();
 		SameFileTests();
-	}
-	EndTestGroup();
+	} EndTestGroup;
 	TestGroup("Full test suite")
 	{
 		SkipTestGroup("Skip group")
@@ -59,8 +56,7 @@ main(int argc, char **argv)
 			Test(x == y);
 			TestOp(x, !=, y);
 			SkipTestVEq(x, y);
-			EndTestGroup();
-		}
+		} EndTestGroup;
 		TestGroup("Group of tests...")
 		{
 			SkipTest(x == y);
@@ -78,12 +74,10 @@ main(int argc, char **argv)
 				int Offset = OffsetOf(t, ptr);
 				int isize = 3*sizeof(int);
 				TestEq(Offset, isize);
-				EndTestGroup();
-			}
-			EndTestGroup();
+			} EndTestGroup;
 		}
+	} EndTestGroup;
 	TestOp(x, <=, y);
-	} EndTestGroup();
 	TestsInIncludedFile();
 
 

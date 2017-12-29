@@ -5,6 +5,7 @@
 // - define no colour
 // - proper stack?
 // - Generic for equal and print
+// - safeguard against unmatched 
 
 #define Equal(a, b) (sizeof(a) == sizeof(b) ? Equal_(&(a), &(b), sizeof(a)) : 0)
 static int
@@ -50,8 +51,8 @@ Equal_(void *p1, void *p2, int n)
 #define SkipTestGroup_(i, m) SWEET_ADDSKIP(i, m); GlobalTestSweetParent = i
 #define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);}while(0);
 #define SkipNewTestGroup(m) SweetParentReset(); SkipTestGroup(m)
-#define EndTestGroup() do{GlobalTestSweetParent=Tests[GlobalTestSweetParent].Parent;}while(0)
-#define EndNewTestGroup() 
+#define EndTestGroup do{GlobalTestSweetParent=Tests[GlobalTestSweetParent].Parent;}while(0)
+#define EndNewTestGroup EndTestGroup; SweetParentRestore()
 		
 
 #define ANSI_RESET   "\x1b[0m"

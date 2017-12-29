@@ -8,5 +8,5 @@ TestsInIncludedFile()
 		Test(a == b);
 		Test(a != b);
 		TestOp(a, <=, b);
-	} EndTestGroup();
+	} EndTestGroup;
 }
