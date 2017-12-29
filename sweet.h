@@ -172,7 +172,9 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		int cParents = Sweet_NumParents(iTest);
 		int IsGroup = Sweet_IsGroup(iTest);
 		if(IsGroup) { Sweet_Indent(cParents); fputc('\n', SWEET_OUTFILE); }
-		if(Test.Filename && Test.Filename != Tests[iTest-1].Filename)
+
+		if(!!Test.Filename != !!Tests[iTest-1].Filename) { fputc('\n', SWEET_OUTFILE); }
+		else if(Test.Filename != Tests[iTest-1].Filename)
 		{ // print underlined filename
 			fprintf(SWEET_OUTFILE, "%s\n", Test.Filename);
 			for(int i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
