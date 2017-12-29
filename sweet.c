@@ -31,14 +31,13 @@ SameFileUnhitTests()
 	}
 }
 
-int
-main(int argc, char **argv)
+int main()
 {
 	int x = 1;
 	int y = 1;
-	t T1 = {{0}};
-	t T2 = {{0}};
-	t T3 = {{0}};
+	t T1 = {{0},0};
+	t T2 = {{0},0};
+	t T3 = {{0},0};
 	T1.val[1] = 8;
 	T2.val[1] = 8;
 	T3.val[1] = 7;
