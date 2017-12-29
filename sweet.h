@@ -5,9 +5,7 @@
 // - define no colour
 // - proper stack?
 
-#define Equal(a, b) (sizeof(a) <= sizeof(double) ? ((a) == (b)) : \
-					sizeof(a) != sizeof(b) ? 0 : \
-					Equal_(&(a), &(b), sizeof(a)))
+#define Equal(a, b) (sizeof(a) == sizeof(b) ? Equal_(&(a), &(b), sizeof(a)) : 0)
 static int
 Equal_(void *p1, void *p2, int n)
 {

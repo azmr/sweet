@@ -35,9 +35,16 @@ SameFileUnhitTests()
 int
 main(int argc, char **argv)
 {
+	t T1 = {0};
+	t T2 = {0};
+	t T3 = {0};
+	T1.val[1] = 8;
+	T2.val[1] = 8;
+	T3.val[1] = 7;
+	TestEq(T1, T2);
+	TestEq(T1, T3);
 	int x = 1;
 	int y = 1;
-	/* printf("Global parent: %u\n", GlobalTestSweetParent); */
 	TestGroup("Single Test");
 	TestOp(x, >=, y);
 	SameFileUnhitTests();
@@ -66,12 +73,10 @@ main(int argc, char **argv)
 			TestVEq(OffsetOf(t, ptr), 4*sizeof(int));
 			TestGroup("Var tests")
 			{
-				/* printf("Global parent: %u\n", GlobalTestSweetParent); */
 				int Offset = OffsetOf(t, ptr);
 				int isize = 3*sizeof(int);
 				TestEq(Offset, isize);
 				EndTestGroup();
-				/* printf("Global parent: %u\n", GlobalTestSweetParent); */
 			}
 			EndTestGroup();
 		}
