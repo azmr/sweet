@@ -2,7 +2,6 @@
 /* TODO:
 // - option to not print subtests for skipped groups?
 // - summary of passes and fails by file
-// - define no colour
 // - proper stack?
 // - Generic for equal and print
 // - better message support
@@ -62,12 +61,21 @@ Equal_(void *p1, void *p2, int n)
 #define EndNewTestGroup EndTestGroup; SweetParentRestore()
 		
 
+#ifdef  SWEET_NOCOLOUR
+#define ANSI_RESET   ""
+#define ANSI_RED	 ""
+#define ANSI_GREEN   ""
+#define ANSI_YELLOW  ""
+#define ANSI_MAGENTA ""
+#define ANSI_WHITE   ""
+#else /*SWEET_NOCOLOUR*/
 #define ANSI_RESET   "\x1b[0m"
-#define ANSI_RED     "\x1b[31m"
+#define ANSI_RED	 "\x1b[31m"
 #define ANSI_GREEN   "\x1b[32m"
 #define ANSI_YELLOW  "\x1b[33m"
 #define ANSI_MAGENTA "\x1b[35m"
 #define ANSI_WHITE   "\x1b[37m"
+#endif/*SWEET_NOCOLOUR*/
 
 typedef enum test_sweet_status
 {
