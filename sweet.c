@@ -3,7 +3,7 @@
 #include "sweet.h"
 #include "sweet2.c"
 
-#define OffsetOf(type, el) (unsigned long long)(&((type *)0)->el)
+#define OffsetOf(type, el) (unsigned long)(&((type *)0)->el)
 typedef struct t
 {
 	int val[3];
@@ -34,6 +34,8 @@ SameFileUnhitTests()
 int
 main(int argc, char **argv)
 {
+	int x = 1;
+	int y = 1;
 	t T1 = {{0}};
 	t T2 = {{0}};
 	t T3 = {{0}};
@@ -42,8 +44,6 @@ main(int argc, char **argv)
 	T3.val[1] = 7;
 	TestEq(T1, T2);
 	TestEq(T1, T3);
-	int x = 1;
-	int y = 1;
 	TestGroup("Single Test");
 	{
 		TestOp(x, >=, y);

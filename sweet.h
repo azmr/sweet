@@ -23,9 +23,9 @@
 SWEET_STATIC int
 Equal_(void *p1, void *p2, int n)
 {
-	int Result = 1;
+	int i, Result = 1;
 	unsigned char *u1 = (unsigned char *)p1, *u2 = (unsigned char *)p2;
-	for(int i = 0; i < n; ++i) { if(u1[i] != u2[i]) { Result = 0; } }
+	for(i = 0; i < n; ++i) { if(u1[i] != u2[i]) { Result = 0; } }
 	return Result;
 }
 
@@ -75,7 +75,7 @@ typedef enum test_sweet_status
 	SWEET_STATUS_Undefined = 0,
 	SWEET_STATUS_Fail,
 	SWEET_STATUS_Pass,
-	SWEET_STATUS_Skip,
+	SWEET_STATUS_Skip
 } test_sweet_status;
 
 struct test;
@@ -111,8 +111,9 @@ Sweet_NumParents(unsigned int i)
 SWEET_STATIC SWEET_INLINE void
 Sweet_Indent(unsigned int n)
 {
+	unsigned int iIndent;
 	fputs(ANSI_WHITE, SWEET_OUTFILE);
-	for(unsigned int iIndent = n; iIndent; --iIndent)
+	for(iIndent = n; iIndent; --iIndent)
 	{ fputs("|   ", SWEET_OUTFILE); }
 	fputs(ANSI_RESET, SWEET_OUTFILE);
 }
@@ -146,8 +147,11 @@ Sweet_ConditionalStatusInc(unsigned int i, int Condition, unsigned int *cPass, u
 SWEET_STATIC int
 PrintTestResults_(test *Tests, unsigned int cTests)
 {
+	unsigned int i, iTest, iPrevValid, iParent;
+	unsigned int cOGFail = 0, cOGPass = 0, cOIFail = 0, cOIPass = 0, cMissed = 0;
+	char TestStatus, *TestColour;
 	if( ! Sweet_IsGroup(1)) { fputc('\n', SWEET_OUTFILE); }
-	for(unsigned int i = 1; i < cTests; ++i)
+	for(i = 1; i < cTests; ++i)
 	{ /* update skip/fail status based on others in hierarchy */
 		test Test = Tests[i];
 		switch(Test.Status)
@@ -173,24 +177,22 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		}
 	}
 
-	unsigned int cOGFail = 0, cOGPass = 0, cOIFail = 0, cOIPass = 0, cMissed = 0;
-	for(unsigned int iTest = 1; iTest < cTests; ++iTest)
+	for(iTest = 1; iTest < cTests; ++iTest)
 	{ /* print out status and calculate/print group summary */
 		test Test = Tests[iTest];
 		int cParents = Sweet_NumParents(iTest);
 		int IsGroup = Sweet_IsGroup(iTest);
 		if(IsGroup) { Sweet_Indent(cParents); fputc('\n', SWEET_OUTFILE); }
 
-		unsigned int iPrevValid = iTest;
+		iPrevValid = iTest;
 		while(iPrevValid && ! Tests[--iPrevValid].Filename);
 		if(Test.Filename && (! iPrevValid || Test.Filename != Tests[iPrevValid].Filename))
 		{ /* print underlined filename */
 			fprintf(SWEET_OUTFILE, "%s\n", Test.Filename);
-			for(int i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
+			for(i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
 			fprintf(SWEET_OUTFILE, "\n\n");
 		}
 
-		char TestStatus, *TestColour = "";
 		switch(Test.Status)
 		{ /* set status character and colour */
 			case SWEET_STATUS_Fail: if(!Test.Parent) ++cOGFail; if(!IsGroup) ++cOIFail;
@@ -198,8 +200,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 			case SWEET_STATUS_Pass: if(!Test.Parent) ++cOGPass; if(!IsGroup) ++cOIPass;
 									TestStatus = '/'; TestColour = ANSI_GREEN;   break;
 			case SWEET_STATUS_Skip: TestStatus = '-'; TestColour = ANSI_YELLOW;  break;
-			case SWEET_STATUS_Undefined: TestStatus = '?';
-				 if(!TestColour[0]) { TestColour = ANSI_YELLOW; ++cMissed; } break;
+			case SWEET_STATUS_Undefined: TestStatus = '?'; TestColour = ANSI_YELLOW; ++cMissed; break;
 			default:                TestStatus = '!'; TestColour = ANSI_MAGENTA "ERROR: UNKNOWN STATUS! ";
 		}
 
@@ -207,7 +208,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		fprintf(SWEET_OUTFILE, "%s[%c] %s"ANSI_RESET"\n", TestColour, TestStatus,
 				Test.Message ? Test.Message : "** test code not hit **");
 
-		unsigned int iParent = Test.Parent;
+		iParent = Test.Parent;
 		if(Tests[iTest+1].Parent < iParent) /* end of group */
 		{ /* calculate annd append summary of group */
 			do /* repeat if dropping multiple levels */
