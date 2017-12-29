@@ -6,6 +6,7 @@
 // - proper stack?
 // - Generic for equal and print
 // - safeguard against unmatched 
+// - better message support
 
 #define Equal(a, b) (sizeof(a) == sizeof(b) ? Equal_(&(a), &(b), sizeof(a)) : 0)
 static int
@@ -173,8 +174,9 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		int IsGroup = Sweet_IsGroup(iTest);
 		if(IsGroup) { Sweet_Indent(cParents); fputc('\n', SWEET_OUTFILE); }
 
-		if(!!Test.Filename != !!Tests[iTest-1].Filename) { fputc('\n', SWEET_OUTFILE); }
-		else if(Test.Filename != Tests[iTest-1].Filename)
+		unsigned int iPrevValid = iTest;
+		while(iPrevValid && ! Tests[--iPrevValid].Filename);
+		if(Test.Filename && (! iPrevValid || Test.Filename != Tests[iPrevValid].Filename))
 		{ // print underlined filename
 			fprintf(SWEET_OUTFILE, "%s\n", Test.Filename);
 			for(int i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
