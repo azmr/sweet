@@ -100,12 +100,12 @@ SWEET_STATIC unsigned int GlobalTestSweetParent = __COUNTER__, GlobalTestSweetPa
 
 test Tests[];
 
-SWEET_STATIC SWEET_INLINE int
-Sweet_IsGroup(unsigned int i)
-{
-	int Result = Tests[i+1].Parent == i;
-	return Result;
-}
+#define Sweet_IsGroup(i) (Tests[i+1].Parent == i)
+
+#define Sweet_ConditionalStatusInc(i, Condition, cPass, cFail) { \
+	if(Condition) { \
+		if	   (Tests[i].Status == SWEET_STATUS_Pass) { ++cPass; } \
+		else if(Tests[i].Status == SWEET_STATUS_Fail) { ++cFail; }}}
 
 SWEET_STATIC SWEET_INLINE unsigned int
 Sweet_NumParents(unsigned int i)
@@ -137,16 +137,6 @@ Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass
 	{ fprintf(SWEET_OUTFILE, "    [ %u/%u (%5.1f%%) ]", cIPass, cITotal, 100.0*(double)cIPass/(double)cITotal); }
 	if(cMissed) { fprintf(SWEET_OUTFILE, "    Missed: %u", cMissed); }
 	fprintf(SWEET_OUTFILE, ANSI_RESET"\n");
-}
-
-SWEET_STATIC SWEET_INLINE void
-Sweet_ConditionalStatusInc(unsigned int i, int Condition, unsigned int *cPass, unsigned int *cFail)
-{
-	if(Condition)
-	{
-		if	   (Tests[i].Status == SWEET_STATUS_Pass) { ++*cPass; }
-		else if(Tests[i].Status == SWEET_STATUS_Fail) { ++*cFail; }
-	}
 }
 
 /* returns number of failed atomic tests (doesn't count groups) */
@@ -223,8 +213,8 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 				unsigned int cGPass = 0, cGFail = 0, cIPass = 0, cIFail = 0, iGroup = iTest;
 				while(Tests[iGroup].Parent >= iParent) /* go back through all in same group */
 				{ /* add individual tests and direct children to respective counters */
-					Sweet_ConditionalStatusInc(iGroup, ! Sweet_IsGroup(iGroup),         &cIPass, &cIFail);
-					Sweet_ConditionalStatusInc(iGroup, Tests[iGroup].Parent == iParent, &cGPass, &cGFail);
+					Sweet_ConditionalStatusInc(iGroup, ! Sweet_IsGroup(iGroup),         cIPass, cIFail);
+					Sweet_ConditionalStatusInc(iGroup, Tests[iGroup].Parent == iParent, cGPass, cGFail);
 					--iGroup;
 				}
 				if(cGPass || cGFail) /* ignore skipped groups */
