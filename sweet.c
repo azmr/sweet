@@ -1,4 +1,5 @@
 #include <stdio.h>
+#define SWEET_INLINE
 #include "sweet.h"
 #include "sweet2.c"
 

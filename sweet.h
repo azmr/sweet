@@ -9,19 +9,25 @@
 // - better message support
 */
 
+#ifndef SWEET_OUTFILE
+#define SWEET_OUTFILE stdout
+#endif/*SWEET_OUTFILE*/
+#ifndef SWEET_STATIC
+#define SWEET_STATIC static
+#endif/*SWEET_STATIC*/
+#ifndef SWEET_INLINE
+#define SWEET_INLINE inline
+#endif/*SWEET_INLINE*/
+
 #define Equal(a, b) (sizeof(a) == sizeof(b) ? Equal_(&(a), &(b), sizeof(a)) : 0)
-static int
+SWEET_STATIC int
 Equal_(void *p1, void *p2, int n)
 {
 	int Result = 1;
-	char *u1 = (char *)p1, *u2 = (char *)p2;
+	unsigned char *u1 = (unsigned char *)p1, *u2 = (unsigned char *)p2;
 	for(int i = 0; i < n; ++i) { if(u1[i] != u2[i]) { Result = 0; } }
 	return Result;
 }
-
-#ifndef SWEET_OUTFILE
-#define SWEET_OUTFILE stdout
-#endif/*SWEET_OUTFILE */
 
 /* NOTE: i < Parent if in separate file - this just resets to no parent */
 #define SWEET_ADDSKIP(i, m) \
@@ -83,18 +89,18 @@ struct test
 };
 
 /* NOTE: leave initial table entry empty */
-static unsigned int GlobalTestSweetParent = __COUNTER__, GlobalTestSweetParentTmp;
+SWEET_STATIC unsigned int GlobalTestSweetParent = __COUNTER__, GlobalTestSweetParentTmp;
 
 test Tests[];
 
-static inline int
+SWEET_STATIC SWEET_INLINE int
 Sweet_IsGroup(unsigned int i)
 {
 	int Result = Tests[i+1].Parent == i;
 	return Result;
 }
 
-static inline unsigned int
+SWEET_STATIC SWEET_INLINE unsigned int
 Sweet_NumParents(unsigned int i)
 {
 	unsigned int cParents = 0;
@@ -102,7 +108,7 @@ Sweet_NumParents(unsigned int i)
 	return cParents;
 }
 
-static inline void
+SWEET_STATIC SWEET_INLINE void
 Sweet_Indent(unsigned int n)
 {
 	fputs(ANSI_WHITE, SWEET_OUTFILE);
@@ -111,7 +117,7 @@ Sweet_Indent(unsigned int n)
 	fputs(ANSI_RESET, SWEET_OUTFILE);
 }
 
-static inline void
+SWEET_STATIC SWEET_INLINE void
 Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass, unsigned int cIFail, unsigned int cMissed)
 {
 	char *ColourString = cGFail ? ANSI_RED : ANSI_GREEN;
@@ -125,7 +131,7 @@ Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass
 	fprintf(SWEET_OUTFILE, ANSI_RESET"\n");
 }
 
-static inline void
+SWEET_STATIC SWEET_INLINE void
 Sweet_ConditionalStatusInc(unsigned int i, int Condition, unsigned int *cPass, unsigned int *cFail)
 {
 	if(Condition)
@@ -137,7 +143,7 @@ Sweet_ConditionalStatusInc(unsigned int i, int Condition, unsigned int *cPass, u
 
 /* returns number of failed atomic tests (doesn't count groups) */
 #define PrintTestResults() PrintTestResults_(Tests, __COUNTER__)
-static int
+SWEET_STATIC int
 PrintTestResults_(test *Tests, unsigned int cTests)
 {
 	if( ! Sweet_IsGroup(1)) { fputc('\n', SWEET_OUTFILE); }
