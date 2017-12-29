@@ -5,7 +5,6 @@
 // - define no colour
 // - proper stack?
 // - Generic for equal and print
-// - safeguard against unmatched 
 // - better message support
 */
 
@@ -54,12 +53,12 @@ Equal_(void *p1, void *p2, int n)
 #define SweetParentRestore() do{GlobalTestSweetParent = GlobalTestSweetParentTmp;}while(0)
 
 #define TestGroup_(i, m) SWEET_ADDTEST(i, SWEET_STATUS_Pass, m); if(i > GlobalTestSweetParent) GlobalTestSweetParent = i
-#define TestGroup(m) do{TestGroup_(__COUNTER__, m);}while(0);
+#define TestGroup(m) do{TestGroup_(__COUNTER__, m);    /** REMEMBER: EndTestGroup **/
 #define NewTestGroup(m) SweetParentReset(); TestGroup(m)
 #define SkipTestGroup_(i, m) SWEET_ADDSKIP(i, m); GlobalTestSweetParent = i
-#define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);}while(0);
+#define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);    /** REMEMBER: EndTestGroup **/
 #define SkipNewTestGroup(m) SweetParentReset(); SkipTestGroup(m)
-#define EndTestGroup do{GlobalTestSweetParent=Tests[GlobalTestSweetParent].Parent;}while(0)
+#define EndTestGroup GlobalTestSweetParent=Tests[GlobalTestSweetParent].Parent;}while(0)
 #define EndNewTestGroup EndTestGroup; SweetParentRestore()
 		
 

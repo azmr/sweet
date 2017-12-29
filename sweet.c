@@ -76,7 +76,7 @@ main(int argc, char **argv)
 				int isize = 3*sizeof(int);
 				TestEq(Offset, isize);
 			} EndTestGroup;
-		}
+		} EndTestGroup;
 	} EndTestGroup;
 	TestOp(x, <=, y);
 	TestsInIncludedFile();
