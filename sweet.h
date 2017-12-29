@@ -1,5 +1,5 @@
 #ifndef SWEET_H
-// TODO:
+/* TODO:
 // - option to not print subtests for skipped groups?
 // - summary of passes and fails by file
 // - define no colour
@@ -7,6 +7,7 @@
 // - Generic for equal and print
 // - safeguard against unmatched 
 // - better message support
+*/
 
 #define Equal(a, b) (sizeof(a) == sizeof(b) ? Equal_(&(a), &(b), sizeof(a)) : 0)
 static int
@@ -20,9 +21,9 @@ Equal_(void *p1, void *p2, int n)
 
 #ifndef SWEET_OUTFILE
 #define SWEET_OUTFILE stdout
-#endif//SWEET_OUTFILE
+#endif/*SWEET_OUTFILE */
 
-// NOTE: i < Parent if in separate file - this just resets to no parent
+/* NOTE: i < Parent if in separate file - this just resets to no parent */
 #define SWEET_ADDSKIP(i, m) \
 	Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
 	Tests[i].Filename=__FILE__; \
@@ -81,7 +82,7 @@ struct test
 	int Status;
 };
 
-// NOTE: leave initial table entry empty
+/* NOTE: leave initial table entry empty */
 static unsigned int GlobalTestSweetParent = __COUNTER__, GlobalTestSweetParentTmp;
 
 test Tests[];
@@ -134,14 +135,14 @@ Sweet_ConditionalStatusInc(unsigned int i, int Condition, unsigned int *cPass, u
 	}
 }
 
-// returns number of failed atomic tests (doesn't count groups)
+/* returns number of failed atomic tests (doesn't count groups) */
 #define PrintTestResults() PrintTestResults_(Tests, __COUNTER__)
 static int
 PrintTestResults_(test *Tests, unsigned int cTests)
 {
 	if( ! Sweet_IsGroup(1)) { fputc('\n', SWEET_OUTFILE); }
 	for(unsigned int i = 1; i < cTests; ++i)
-	{ // update skip/fail status based on others in hierarchy
+	{ /* update skip/fail status based on others in hierarchy */
 		test Test = Tests[i];
 		switch(Test.Status)
 		{
@@ -149,14 +150,14 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 			case SWEET_STATUS_Pass: /* do nothing */ break;
 
 			case SWEET_STATUS_Fail:
-			{ // propogate failures up the hierarchy
+			{ /* propogate failures up the hierarchy */
 				unsigned int iParent = i;
 				while((iParent = Tests[iParent].Parent))
 				{ Tests[iParent].Status = SWEET_STATUS_Fail; }
 			} break;
 
 			case SWEET_STATUS_Skip:
-			{ // propogate skipping down the hierarchy
+			{ /* propogate skipping down the hierarchy */
 				unsigned int iChild = i;
 				while(Tests[++iChild].Parent >= i)
 				{ Tests[iChild].Status = SWEET_STATUS_Skip; }
@@ -168,7 +169,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 
 	unsigned int cOGFail = 0, cOGPass = 0, cOIFail = 0, cOIPass = 0, cMissed = 0;
 	for(unsigned int iTest = 1; iTest < cTests; ++iTest)
-	{ // print out status and calculate/print group summary
+	{ /* print out status and calculate/print group summary */
 		test Test = Tests[iTest];
 		int cParents = Sweet_NumParents(iTest);
 		int IsGroup = Sweet_IsGroup(iTest);
@@ -177,7 +178,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		unsigned int iPrevValid = iTest;
 		while(iPrevValid && ! Tests[--iPrevValid].Filename);
 		if(Test.Filename && (! iPrevValid || Test.Filename != Tests[iPrevValid].Filename))
-		{ // print underlined filename
+		{ /* print underlined filename */
 			fprintf(SWEET_OUTFILE, "%s\n", Test.Filename);
 			for(int i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
 			fprintf(SWEET_OUTFILE, "\n\n");
@@ -185,7 +186,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 
 		char TestStatus, *TestColour = "";
 		switch(Test.Status)
-		{ // set status character and colour
+		{ /* set status character and colour */
 			case SWEET_STATUS_Fail: if(!Test.Parent) ++cOGFail; if(!IsGroup) ++cOIFail;
 									TestStatus = 'X'; TestColour = ANSI_RED;     break;
 			case SWEET_STATUS_Pass: if(!Test.Parent) ++cOGPass; if(!IsGroup) ++cOIPass;
@@ -201,19 +202,19 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 				Test.Message ? Test.Message : "** test code not hit **");
 
 		unsigned int iParent = Test.Parent;
-		if(Tests[iTest+1].Parent < iParent) // end of group
-		{ // calculate annd append summary of group
-			do // repeat if dropping multiple levels
+		if(Tests[iTest+1].Parent < iParent) /* end of group */
+		{ /* calculate annd append summary of group */
+			do /* repeat if dropping multiple levels */
 			{
 				unsigned int cGPass = 0, cGFail = 0, cIPass = 0, cIFail = 0, iGroup = iTest;
-				while(Tests[iGroup].Parent >= iParent) // go back through all in same group
-				{ // add individual tests and direct children to respective counters
+				while(Tests[iGroup].Parent >= iParent) /* go back through all in same group */
+				{ /* add individual tests and direct children to respective counters */
 					Sweet_ConditionalStatusInc(iGroup, ! Sweet_IsGroup(iGroup),         &cIPass, &cIFail);
 					Sweet_ConditionalStatusInc(iGroup, Tests[iGroup].Parent == iParent, &cGPass, &cGFail);
 					--iGroup;
 				}
-				if(cGPass || cGFail) // ignore skipped groups
-				{ // print group summary
+				if(cGPass || cGFail) /* ignore skipped groups */
+				{ /* print group summary */
 					unsigned int cIndents = Sweet_NumParents(iParent);
 					Sweet_Indent(cIndents);
 					Sweet_PrintSummary(cGPass, cGFail, cIPass, cIFail, 0);
@@ -235,4 +236,4 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 #define SWEET_END_TESTS test Tests[__COUNTER__]
 
 #define SWEET_H
-#endif//SWEET_H
+#endif/*SWEET_H*/
