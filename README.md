@@ -86,6 +86,8 @@ See `sweet.c` and `sweet2.c`.
 
 You can redefine `Assert` as `Test` to see the result of all assumptions, rather than just breaking at the first that's incorrect.
 
+If you're using Windows and want `cmd` to show colours, an easy way is to use [ansicon](http://adoxa.altervista.org/ansicon/). Just download it and install it with `cmd` i.e. `x64\ansicon.exe -i`, then you're ready to go!
+
 Things to look out for:
 Calling a function with groups of tests while already in the middle of a group of tests will normally flatten the nenw hierarchy. _Hint: use `NewTestGroup(m)... EndNewTestGroup;` as the base group in called functions._
 
