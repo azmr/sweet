@@ -54,6 +54,7 @@ int main() {
     // tests on project.c as above
     return PrintTestResults();
 }
+SWEET_END_TESTS;
 ```
 
 Because `PrintTestResults` returns 0 on all (non-skipped) tests passing and >0 otherwise, it can be used as the return status from `main`.
@@ -82,6 +83,8 @@ Copy, paste and alter the following `#define`s wherever necessary. The defaults 
 
 ### Advanced use:
 See `sweet.c` and `sweet2.c`.
+
+You can redefine `Assert` as `Test` to see the result of all assumptions, rather than just breaking at the first that's incorrect.
 
 Things to look out for:
 Calling a function with groups of tests while already in the middle of a group of tests will normally flatten the nenw hierarchy. _Hint: use `NewTestGroup(m)... EndNewTestGroup;` as the base group in called functions._
