@@ -1,4 +1,5 @@
 #ifndef SWEET_H
+#include <stdio.h>
 /* TODO:
 // - option to not print subtests for skipped groups?
 // - summary of passes and fails by file... what about by containing function?
@@ -35,15 +36,15 @@
 
 /* NOTE: i < Parent if in separate function - this just resets to no parent */
 #define SWEET_ADDSKIP(i, m) \
-	Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
-	Tests[i].Filename=__FILE__; \
-	Tests[i].Status=SWEET_STATUS_Skip; \
-	Tests[i].Message=m
+	Sweet_Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
+	Sweet_Tests[i].Filename=__FILE__; \
+	Sweet_Tests[i].Status=SWEET_STATUS_Skip; \
+	Sweet_Tests[i].Message=m
 #define SWEET_ADDTEST(i, s, m) \
-	Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
-	Tests[i].Filename=__FILE__; \
-	Tests[i].Status=(s) ? SWEET_STATUS_Pass : SWEET_STATUS_Fail; \
-	Tests[i].Message=m
+	Sweet_Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
+	Sweet_Tests[i].Filename=__FILE__; \
+	Sweet_Tests[i].Status=(s) ? SWEET_STATUS_Pass : SWEET_STATUS_Fail; \
+	Sweet_Tests[i].Message=m
 #define Test(exp)            do{SWEET_ADDTEST(__COUNTER__, exp,        #exp         );}while(0)
 #define TestOp(a, op, b)     do{SWEET_ADDTEST(__COUNTER__, a op b,     #a" "#op" "#b);}while(0)
 #define TestEq(a, e)		 do{SWEET_ADDTEST(__COUNTER__, Equal(a,e), #a" == "#e   );}while(0)
@@ -96,7 +97,7 @@ struct test
 /* NOTE: leave initial table entry empty */
 SWEET_STATIC unsigned int GlobalTestSweetParent = __COUNTER__, GlobalTestSweetParentTmp;
 
-test Tests[];
+test Sweet_Tests[];
 
 #define Sweet_IsGroup(i) (Tests[i+1].Parent == i)
 
@@ -109,7 +110,8 @@ SWEET_STATIC SWEET_INLINE unsigned int
 Sweet_NumParents(unsigned int i)
 {
 	unsigned int cParents = 0;
-	while((i = Tests[i].Parent)) { ++cParents; }
+	i = Sweet_Tests[i].Parent;
+	while(i) { ++cParents; i = Sweet_Tests[i].Parent; }
 	return cParents;
 }
 
@@ -138,11 +140,11 @@ Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass
 }
 
 /* returns number of failed atomic tests (doesn't count groups) */
-#define PrintTestResults() PrintTestResults_(Tests, __COUNTER__)
+#define PrintTestResults() PrintTestResults_(Sweet_Tests, __COUNTER__)
 SWEET_STATIC int
 PrintTestResults_(test *Tests, unsigned int cTests)
 {
-	unsigned int i, iTest, iPrevValid, iParent;
+	unsigned int i, iTest, iPrevValid, iParent, iChild;
 	unsigned int cOGFail = 0, cOGPass = 0, cOIFail = 0, cOIPass = 0, cMissed = 0;
 	char TestStatus, *TestColour;
 	if( ! Sweet_IsGroup(1)) { fputc('\n', SWEET_OUTFILE); }
@@ -156,16 +158,16 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 
 			case SWEET_STATUS_Fail:
 			{ /* propogate failures up the hierarchy */
-				unsigned int iParent = i;
-				while((iParent = Tests[iParent].Parent))
-				{ Tests[iParent].Status = SWEET_STATUS_Fail; }
+				iParent = Tests[i].Parent;
+				while(iParent)
+				{ Tests[iParent].Status = SWEET_STATUS_Fail; iParent = Tests[iParent].Parent; }
 			} break;
 
 			case SWEET_STATUS_Skip:
 			{ /* propogate skipping down the hierarchy */
-				unsigned int iChild = i;
-				while(Tests[++iChild].Parent >= i)
-				{ Tests[iChild].Status = SWEET_STATUS_Skip; }
+				iChild = i+1;
+				while(Tests[iChild].Parent >= i)
+				{ Tests[iChild].Status = SWEET_STATUS_Skip; ++iChild; }
 			} break;
 
 			default: fprintf(SWEET_OUTFILE, ANSI_MAGENTA "ERROR: UNKNOWN STATUS at %u" ANSI_RESET, i);
@@ -235,7 +237,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 	return cOIFail;
 }
 
-#define SWEET_END_TESTS test Tests[__COUNTER__]
+#define SWEET_END_TESTS test Sweet_Tests[__COUNTER__]
 
 #define SWEET_H
 #endif/*SWEET_H*/
