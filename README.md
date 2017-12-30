@@ -58,7 +58,7 @@ int main() {
 
 Because `PrintTestResults` returns 0 on all (non-skipped) tests passing and >0 otherwise, it can be used as the return status from `main`.
 
-This means you can determine if your test suite is passing from the command line. You can then use this e.g. in a Git pre-commit hook.
+This means you can determine if your test suite is passing from the command line. You can then use this e.g. in a Git pre-commit hook, preventing the commit if tests fail.
 
 ### Within-project testing:
 I'm not sure this is currently recommended, but there's no particular reason this shouldn't work, bearing in mind the limitations below.
