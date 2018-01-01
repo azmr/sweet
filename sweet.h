@@ -75,6 +75,13 @@ Equal_(void *p1, void *p2, int n)
 	for(i = 0; i < n; ++i) { if(u1[i] != u2[i]) { Result = 0; } }
 	return Result;
 }
+SWEET_STATIC int
+StrEq(char *s1, char *s2)
+{
+	unsigned int i; int Result = 1;
+	for(i = 0; Result && s1[i] && s2[i]; ++i, Result = s1[i] == s2[i]);
+	return Result;
+}
 
 typedef enum test_sweet_status
 {
@@ -183,7 +190,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 
 		iPrevValid = iTest;
 		while(iPrevValid && ! Tests[--iPrevValid].Filename);
-		if(Test.Filename && (! iPrevValid || Test.Filename != Tests[iPrevValid].Filename))
+		if(Test.Filename && (! iPrevValid || !StrEq(Test.Filename, Tests[iPrevValid].Filename)))
 		{ /* print underlined filename */
 			fprintf(SWEET_OUTFILE, "%s\n", Test.Filename);
 			for(i = 0; Test.Filename[i]; i++) { fputc('=', SWEET_OUTFILE); }
