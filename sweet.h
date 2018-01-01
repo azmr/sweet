@@ -6,6 +6,8 @@
 // - proper stack?
 // - Generic for equal and print
 // - better message support
+// - user definable macro for checking and printing arbitrary types
+// - snprintf where possible
 */
 
 #ifndef SWEET_OUTFILE
@@ -17,6 +19,9 @@
 #ifndef SWEET_INLINE
 #define SWEET_INLINE inline
 #endif/*SWEET_INLINE*/
+#ifndef SWEET_MESSAGE_LENGTH
+#define SWEET_MESSAGE_LENGTH 256
+#endif/*SWEET_MESSAGE_LENGTH*/
 
 #ifdef  SWEET_NOCOLOUR
 #define ANSI_RESET   ""
@@ -39,20 +44,24 @@
 	Sweet_Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
 	Sweet_Tests[i].Filename=__FILE__; \
 	Sweet_Tests[i].Status=SWEET_STATUS_Skip; \
-	Sweet_Tests[i].Message=m
+	sprintf(Sweet_Tests[i].Message, "%s", m)
 #define SWEET_ADDTEST(i, s, m) \
 	Sweet_Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
 	Sweet_Tests[i].Filename=__FILE__; \
 	Sweet_Tests[i].Status=(s) ? SWEET_STATUS_Pass : SWEET_STATUS_Fail; \
-	Sweet_Tests[i].Message=m
-#define Test(exp)            do{SWEET_ADDTEST(__COUNTER__, exp,        #exp         );}while(0)
-#define TestOp(a, op, b)     do{SWEET_ADDTEST(__COUNTER__, a op b,     #a" "#op" "#b);}while(0)
-#define TestEq(a, e)		 do{SWEET_ADDTEST(__COUNTER__, Equal(a,e), #a" == "#e   );}while(0)
-#define TestVEq(a, e)        do{SWEET_ADDTEST(__COUNTER__, (a) == (e), #a" == "#e   );}while(0)
-#define SkipTest(exp)        do{SWEET_ADDSKIP(__COUNTER__,             #exp         );}while(0)
-#define SkipTestOp(a, op, b) do{SWEET_ADDSKIP(__COUNTER__,             #a" "#op" "#b);}while(0)
-#define SkipTestEq(a, e)     do{SWEET_ADDSKIP(__COUNTER__,             #a" == "#e   );}while(0)
-#define SkipTestVEq(a, e)    do{SWEET_ADDSKIP(__COUNTER__,             #a" == "#e   );}while(0)
+	sprintf(Sweet_Tests[i].Message, "%s", m)
+#define SWEET_ADDTEXT(i, s, a, op, b, f) SWEET_ADDTEST(i, s, ""); \
+	sprintf(Sweet_Tests[i].Message, (f&&*f)?#a" "#op" "#b"  =>  "f" "#op" "f:#a" "#op" "#b, a, b)
+#define Test(exp)            do{SWEET_ADDTEST(__COUNTER__, exp,          #exp      );}while(0)
+#define TestEq(a, e)		 do{SWEET_ADDTEST(__COUNTER__, Equal(a,e),   #a" == "#e);}while(0)
+#define TestStrEq(a, e)		 do{SWEET_ADDTEXT(__COUNTER__, StrEq(a,e), a,==,e, "%s");}while(0)
+#define TestOp(a, op, b, f)  do{SWEET_ADDTEXT(__COUNTER__, (a) op (b), a,op,b,   f );}while(0)
+#define TestVEq(a, e, f)     TestOp(a, ==, e, f)
+#define SkipTest(exp)        do{SWEET_ADDSKIP(__COUNTER__, #exp         );}while(0)
+#define SkipTestEq(a, e)     do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
+#define SkipTestStrEq(a, e)  do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
+#define SkipTestOp(a, op, b) do{SWEET_ADDSKIP(__COUNTER__, #a" "#op" "#b);}while(0)
+#define SkipTestVEq(a, e, f) do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
 
 #define SweetParentReset() do{GlobalTestSweetParentTmp = GlobalTestSweetParent; GlobalTestSweetParent = 0;}while(0)
 #define SweetParentRestore() do{GlobalTestSweetParent = GlobalTestSweetParentTmp;}while(0)
@@ -95,10 +104,10 @@ struct test;
 typedef struct test test;
 struct test
 {
-	char *Message;
+	char Status;
+	char Message[SWEET_MESSAGE_LENGTH];
 	char *Filename;
 	unsigned int Parent;
-	int Status;
 };
 
 /* NOTE: leave initial table entry empty */
@@ -210,7 +219,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 
 		Sweet_Indent(cParents);
 		fprintf(SWEET_OUTFILE, "%s[%c] %s"ANSI_RESET"\n", TestColour, TestStatus,
-				Test.Message ? Test.Message : "** test code not hit **");
+				Test.Status ? Test.Message : "** test code not hit **");
 
 		iParent = Test.Parent;
 		if(Tests[iTest+1].Parent < iParent) /* end of group */
