@@ -63,7 +63,7 @@
 #define SkipTestGroup_(i, m) SWEET_ADDSKIP(i, m); GlobalTestSweetParent = i
 #define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);        /** REMEMBER: EndTestGroup **/
 #define SkipNewTestGroup(m) SweetParentReset(); SkipTestGroup(m)
-#define EndTestGroup GlobalTestSweetParent=Tests[GlobalTestSweetParent].Parent;}while(0)
+#define EndTestGroup GlobalTestSweetParent=Sweet_Tests[GlobalTestSweetParent].Parent;}while(0)
 #define EndNewTestGroup EndTestGroup; SweetParentRestore()
 
 #define Equal(a, b) (sizeof(a) == sizeof(b) ? Equal_(&(a), &(b), sizeof(a)) : 0)
