@@ -8,6 +8,8 @@
 // - better message support
 // - user definable macro for checking and printing arbitrary types
 // - snprintf where possible
+// - account for COUNTERs before (during?) test suite (currently 'not hit')
+// - add ability to not show child tests, only summary (minimises hit of other counters)
 */
 
 #ifndef SWEET_OUTFILE
@@ -50,13 +52,13 @@
 	Sweet_Tests[i].Filename=__FILE__; \
 	Sweet_Tests[i].Status=(s) ? SWEET_STATUS_Pass : SWEET_STATUS_Fail; \
 	sprintf(Sweet_Tests[i].Message, "%s", m)
-#define SWEET_ADDTEXT(i, s, a, op, b, f) SWEET_ADDTEST(i, s, ""); \
-	sprintf(Sweet_Tests[i].Message, (f&&*f)?#a" "#op" "#b"  =>  "f" "#op" "f:#a" "#op" "#b, a, b)
+#define SWEET_ADDTEXT(i, s, a,a_s, op, b,b_s, f) SWEET_ADDTEST(i, s, ""); \
+	sprintf(Sweet_Tests[i].Message, (f&&*f)?a_s" "#op" "b_s"  =>  "f" "#op" "f:a_s" "#op" "b_s, a, b)
 #define Test(exp)            do{SWEET_ADDTEST(__COUNTER__, exp,          #exp      );}while(0)
 #define TestEq(a, e)		 do{SWEET_ADDTEST(__COUNTER__, Equal(a,e),   #a" == "#e);}while(0)
 #define TestStrEq(a, e)		 do{SWEET_ADDTEXT(__COUNTER__, StrEq(a,e), a,==,e, "%s");}while(0)
-#define TestOp(a, op, b, f)  do{SWEET_ADDTEXT(__COUNTER__, (a) op (b), a,op,b,   f );}while(0)
-#define TestVEq(a, e, f)     TestOp(a, ==, e, f)
+#define TestOp(a, op, b, f)  do{SWEET_ADDTEXT(__COUNTER__, (a) op (b), a,#a,op,b,#b,f);}while(0)
+#define TestVEq(a, e, f)     do{SWEET_ADDTEXT(__COUNTER__, (a) == (e), a,#a,==,e,#e,f);}while(0)
 #define SkipTest(exp)        do{SWEET_ADDSKIP(__COUNTER__, #exp         );}while(0)
 #define SkipTestEq(a, e)     do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
 #define SkipTestStrEq(a, e)  do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
