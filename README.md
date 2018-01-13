@@ -98,3 +98,7 @@ This may not play nicely if your project uses `__COUNTER__` elsewhere...
 For the same reason, the tests will be printed in the order that they appear in the compilation unit.
 
 Tests that aren't hit at runtime can't have any information printed about them other than that they were not hit. This includes which file they're in, so they may be guessed to be in the file before if there are no tests hit in between. (If you have any way around this I'd be happy to hear it).
+
+Because TestEq does a byte-by-byte comparison of the 2 variables passed to it, it's only a shallow comparison. i.e. if your structs contain a pointer, this will only check that the addresses of the pointers are equal, not whether what is pointed to by them is equal.
+
+Additionally, it's possible to be caught out by tagged unions - if you're currently using the smaller of multiple variables in a union and there are stale bytes in the larger variable, these may be different between compared unions. As a result, the test will fail even though what you care about should pass.
