@@ -6,10 +6,13 @@
 // - proper stack?
 // - Generic for equal and print
 // - better message support
+// 		- arbitrary text
+// 		- annotation text
 // - user definable macro for checking and printing arbitrary types
 // - snprintf where possible
 // - account for COUNTERs before (during?) test suite (currently 'not hit')
 // - add ability to not show child tests, only summary (minimises hit of other counters)
+// - collapse skipped groups
 */
 
 #ifndef SWEET_OUTFILE
@@ -30,36 +33,62 @@
 #define ANSI_RED	 ""
 #define ANSI_GREEN   ""
 #define ANSI_YELLOW  ""
+#define ANSI_BLUE    ""
 #define ANSI_MAGENTA ""
+#define ANSI_CYAN    ""
 #define ANSI_WHITE   ""
+#elif defined(SWEET_BRIGHTTEXT)
+#define ANSI_RESET   "\x1b[0m"
+#define ANSI_RED	 "\x1b[91m"
+#define ANSI_GREEN   "\x1b[92m"
+#define ANSI_YELLOW  "\x1b[93m"
+#define ANSI_BLUE    "\x1b[94m"
+#define ANSI_MAGENTA "\x1b[95m"
+#define ANSI_CYAN    "\x1b[96m"
+#define ANSI_WHITE   "\x1b[97m"
 #else /*SWEET_NOCOLOUR*/
 #define ANSI_RESET   "\x1b[0m"
 #define ANSI_RED	 "\x1b[31m"
 #define ANSI_GREEN   "\x1b[32m"
 #define ANSI_YELLOW  "\x1b[33m"
+#define ANSI_BLUE    "\x1b[34m"
 #define ANSI_MAGENTA "\x1b[35m"
+#define ANSI_CYAN    "\x1b[36m"
 #define ANSI_WHITE   "\x1b[37m"
 #endif/*SWEET_NOCOLOUR*/
 
+#define SWEET_LN(x)  SWEET_CAT(x, __LINE__)
+
+#define SWEET_CAT(a,b)  SWEET_CAT2(a,b)
+#define SWEET_CAT2(a,b) SWEET_CAT1(a,b)
+#define SWEET_CAT1(a,b) a##b
+
+#define sweet_n_ln SWEET_LN(sweet_n_)
+
+#ifdef SWEET_NO_DECL
+#define sweet_decl(x)
+#else
+#define sweet_decl(x) x
+#endif/*SWEET_NO_DECL*/
+
 /* NOTE: i < Parent if in separate function - this just resets to no parent */
-#define SWEET_ADDSKIP(i, m) \
-	Sweet_Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
-	Sweet_Tests[i].Filename=__FILE__; \
-	Sweet_Tests[i].Status=SWEET_STATUS_Skip; \
+#define SWEET_ADDTEST_(i, s, m) \
+	Sweet_Tests[i].Parent=(i > GlobalTestSweetParent) ? GlobalTestSweetParent : 0, \
+	Sweet_Tests[i].Filename=__FILE__, \
+	Sweet_Tests[i].Status=(s), \
 	sprintf(Sweet_Tests[i].Message, "%s", m)
-#define SWEET_ADDTEST(i, s, m) \
-	Sweet_Tests[i].Parent=i > GlobalTestSweetParent ? GlobalTestSweetParent : 0; \
-	Sweet_Tests[i].Filename=__FILE__; \
-	Sweet_Tests[i].Status=(s) ? SWEET_STATUS_Pass : SWEET_STATUS_Fail; \
-	sprintf(Sweet_Tests[i].Message, "%s", m)
-#define SWEET_ADDTEXT(i, s, a,a_s, op, b,b_s, f) SWEET_ADDTEST(i, s, ""); \
+#define SWEET_ADDSKIP(i, m)  SWEET_ADDTEST_(i,SWEET_STATUS_Skip,m) 
+#define SWEET_ADDNOTE(i, m)  SWEET_ADDTEST_(i,SWEET_STATUS_Note,m) 
+#define SWEET_ADDTEST(i,s,m) SWEET_ADDTEST_(i,(s) ? SWEET_STATUS_Pass : SWEET_STATUS_Fail,m) 
+#define SWEET_ADDTEXT(i, s, a,a_s, op, b,b_s, f) SWEET_ADDTEST(i, s, ""), \
 	sprintf(Sweet_Tests[i].Message, (f&&*f)?a_s" "#op" "b_s"  =>  "f" "#op" "f:a_s" "#op" "b_s, a, b)
 #define Test(exp)                   do{SWEET_ADDTEST(__COUNTER__, exp,          #exp      );}while(0)
 #define TestEq(a, e)		        do{SWEET_ADDTEST(__COUNTER__, Equal(a,e),   #a" == "#e);}while(0)
-#define TestStrEq(a, e)		        do{SWEET_ADDTEXT(__COUNTER__, StrEq(a,e), a,==,e, "%s");}while(0)
+#define TestStrEq(a, e)		        do{SWEET_ADDTEXT(__COUNTER__, StrEq(a,e), a,#a,==,e,#e,"%s");}while(0)
 #define TestOp(a, op, b, f)         do{SWEET_ADDTEXT(__COUNTER__, (a) op (b), a,#a,op,b,#b,f);}while(0)
 #define TestVEq(a, e, f)            do{SWEET_ADDTEXT(__COUNTER__, (a) == (e), a,#a,==,e,#e,f);}while(0)
 #define TestVEqEps(a, e, ep, f)     do{SWEET_ADDTEXT(__COUNTER__, ((a)-(ep)) <= (e) && (e) <= ((a)+(ep)), a,#a,~=,e,#e,f);}while(0)
+#define TestNote(m)                 do{SWEET_ADDNOTE(__COUNTER__, #m           );}while(0)
 #define SkipTest(exp)               do{SWEET_ADDSKIP(__COUNTER__, #exp         );}while(0)
 #define SkipTestEq(a, e)            do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
 #define SkipTestStrEq(a, e)         do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
@@ -67,16 +96,16 @@
 #define SkipTestVEq(a, e, f)        do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
 #define SkipTestVEqEps(a, e, ep, f) do{SWEET_ADDSKIP(__COUNTER__, #a" ~= "#e   );}while(0)
 
-#define SweetParentReset() do{GlobalTestSweetParentTmp = GlobalTestSweetParent; GlobalTestSweetParent = 0;}while(0)
-#define SweetParentRestore() do{GlobalTestSweetParent = GlobalTestSweetParentTmp;}while(0)
+#define SweetParentReset() (GlobalTestSweetParentTmp = GlobalTestSweetParent, GlobalTestSweetParent = 0)
+#define SweetParentRestore() (GlobalTestSweetParent = GlobalTestSweetParentTmp)
 
-#define TestGroup_(i, m) SWEET_ADDTEST(i, SWEET_STATUS_Pass, m); if(i > GlobalTestSweetParent) GlobalTestSweetParent = i
-#define TestGroup(m) do{TestGroup_(__COUNTER__, m);        /** REMEMBER: EndTestGroup **/
+#define TestGroup_(i, m) (SWEET_ADDTEST(i, SWEET_STATUS_Pass, m), GlobalTestSweetParent = (i > GlobalTestSweetParent) ? i : GlobalTestSweetParent)
+#define TestGroup(m) for(sweet_decl(int) sweet_n_ln = (TestGroup_(__COUNTER__, m), 0); !sweet_n_ln++; EndTestGroup)        /** REMEMBER: EndTestGroup **/
 #define NewTestGroup(m) SweetParentReset(); TestGroup(m)
 #define SkipTestGroup_(i, m) SWEET_ADDSKIP(i, m); GlobalTestSweetParent = i
 #define SkipTestGroup(m) do{SkipTestGroup_(__COUNTER__, m);        /** REMEMBER: EndTestGroup **/
 #define SkipNewTestGroup(m) SweetParentReset(); SkipTestGroup(m)
-#define EndTestGroup GlobalTestSweetParent=Sweet_Tests[GlobalTestSweetParent].Parent;}while(0)
+#define EndTestGroup GlobalTestSweetParent=Sweet_Tests[GlobalTestSweetParent].Parent
 #define EndNewTestGroup EndTestGroup; SweetParentRestore()
 
 #define Equal(a, b) (sizeof(a) == sizeof(b) ? Equal_(&(a), &(b), sizeof(a)) : 0)
@@ -101,7 +130,8 @@ typedef enum test_sweet_status
 	SWEET_STATUS_Undefined = 0,
 	SWEET_STATUS_Fail,
 	SWEET_STATUS_Pass,
-	SWEET_STATUS_Skip
+	SWEET_STATUS_Skip,
+	SWEET_STATUS_Note,
 } test_sweet_status;
 
 struct test;
@@ -117,7 +147,10 @@ struct test
 /* NOTE: leave initial table entry empty */
 SWEET_STATIC unsigned int GlobalTestSweetParent = __COUNTER__, GlobalTestSweetParentTmp;
 
-test Sweet_Tests[];
+#ifndef SWEET_NUM_TESTS
+#define SWEET_NUM_TESTS
+#endif/*SWEET_NUM_TESTS*/
+test Sweet_Tests[SWEET_NUM_TESTS];
 
 #define Sweet_IsGroup(i) (Tests[i+1].Parent == i)
 
@@ -160,9 +193,10 @@ Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass
 }
 
 /* returns number of failed atomic tests (doesn't count groups) */
-#define PrintTestResults() PrintTestResults_(Sweet_Tests, __COUNTER__)
+enum { sweetCONTINUE, sweetPAUSE };
+#define PrintTestResults(loop_pause) PrintTestResults_(Sweet_Tests, __COUNTER__, loop_pause)
 SWEET_STATIC int
-PrintTestResults_(test *Tests, unsigned int cTests)
+PrintTestResults_(test *Tests, unsigned int cTests, int LoopPause)
 {
 	unsigned int i, iTest, iPrevValid, iParent, iChild;
 	unsigned int cOGFail = 0, cOGPass = 0, cOIFail = 0, cOIPass = 0, cMissed = 0;
@@ -174,6 +208,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 		switch(Test.Status)
 		{
 			case SWEET_STATUS_Undefined:
+			case SWEET_STATUS_Note:
 			case SWEET_STATUS_Pass: /* do nothing */ break;
 
 			case SWEET_STATUS_Fail:
@@ -217,6 +252,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 			case SWEET_STATUS_Pass: if(!Test.Parent) ++cOGPass; if(!IsGroup) ++cOIPass;
 									TestStatus = '/'; TestColour = ANSI_GREEN;   break;
 			case SWEET_STATUS_Skip: TestStatus = '-'; TestColour = ANSI_YELLOW;  break;
+			case SWEET_STATUS_Note: TestStatus = '>'; TestColour = ANSI_BLUE;  break;
 			case SWEET_STATUS_Undefined: TestStatus = '?'; TestColour = ANSI_YELLOW; ++cMissed; break;
 			default:                TestStatus = '!'; TestColour = ANSI_MAGENTA "ERROR: UNKNOWN STATUS! ";
 		}
@@ -254,6 +290,7 @@ PrintTestResults_(test *Tests, unsigned int cTests)
 	fputs("\n========\nOverall:\n========\n", SWEET_OUTFILE);
 	Sweet_PrintSummary(cOGPass, cOGFail, cOIPass, cOIFail, cMissed);
 	fputc('\n', SWEET_OUTFILE);
+	while(LoopPause);
 	return cOIFail;
 }
 
