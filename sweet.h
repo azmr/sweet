@@ -13,6 +13,13 @@
 // - account for COUNTERs before (during?) test suite (currently 'not hit')
 // - add ability to not show child tests, only summary (minimises hit of other counters)
 // - collapse skipped groups
+// - printf for notes
+// - byte comparison for TestEq:
+			char buf[2][sizeof(a)];
+			for(i = 0; i < sizeof(sort_int_vals); ++i) {
+				sprintf(buf[0]+i*3, "%.2x   ", ((unsigned char *)arr)[i]);
+				sprintf(buf[1]+i*3, "%.2x   ", ((unsigned char *)sort_int_vals)[i]);
+			}
 */
 
 #ifndef SWEET_OUTFILE
@@ -25,7 +32,7 @@
 #define SWEET_INLINE inline
 #endif/*SWEET_INLINE*/
 #ifndef SWEET_MESSAGE_LENGTH
-#define SWEET_MESSAGE_LENGTH 256
+#define SWEET_MESSAGE_LENGTH 255
 #endif/*SWEET_MESSAGE_LENGTH*/
 
 #ifdef  SWEET_NOCOLOUR
@@ -75,7 +82,7 @@
 #define SWEET_ADDTEST_(i, s, m) \
 	Sweet_Tests[i].Parent=(i > GlobalTestSweetParent) ? GlobalTestSweetParent : 0, \
 	Sweet_Tests[i].Filename=__FILE__, \
-	Sweet_Tests[i].Status=(s), \
+	Sweet_Tests[i].Status=(char)(s), \
 	sprintf(Sweet_Tests[i].Message, "%s", m)
 #define SWEET_ADDSKIP(i, m)  SWEET_ADDTEST_(i,SWEET_STATUS_Skip,m) 
 #define SWEET_ADDNOTE(i, m)  SWEET_ADDTEST_(i,SWEET_STATUS_Note,m) 
@@ -88,7 +95,7 @@
 #define TestOp(a, op, b, f)         do{SWEET_ADDTEXT(__COUNTER__, (a) op (b), a,#a,op,b,#b,f);}while(0)
 #define TestVEq(a, e, f)            do{SWEET_ADDTEXT(__COUNTER__, (a) == (e), a,#a,==,e,#e,f);}while(0)
 #define TestVEqEps(a, e, ep, f)     do{SWEET_ADDTEXT(__COUNTER__, ((a)-(ep)) <= (e) && (e) <= ((a)+(ep)), a,#a,~=,e,#e,f);}while(0)
-#define TestNote(m)                 do{SWEET_ADDNOTE(__COUNTER__, #m           );}while(0)
+#define TestNote(m)                 do{SWEET_ADDNOTE(__COUNTER__, m            );}while(0)
 #define SkipTest(exp)               do{SWEET_ADDSKIP(__COUNTER__, #exp         );}while(0)
 #define SkipTestEq(a, e)            do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
 #define SkipTestStrEq(a, e)         do{SWEET_ADDSKIP(__COUNTER__, #a" == "#e   );}while(0)
@@ -134,21 +141,18 @@ typedef enum test_sweet_status
 	SWEET_STATUS_Note,
 } test_sweet_status;
 
-struct test;
-typedef struct test test;
-struct test
-{
+typedef struct test {
 	char Status;
 	char Message[SWEET_MESSAGE_LENGTH];
 	char *Filename;
 	unsigned int Parent;
-};
+} test;
 
 /* NOTE: leave initial table entry empty */
 SWEET_STATIC unsigned int GlobalTestSweetParent = __COUNTER__, GlobalTestSweetParentTmp;
 
 #ifndef SWEET_NUM_TESTS
-#define SWEET_NUM_TESTS
+#define SWEET_NUM_TESTS 256
 #endif/*SWEET_NUM_TESTS*/
 test Sweet_Tests[SWEET_NUM_TESTS];
 
@@ -193,7 +197,7 @@ Sweet_PrintSummary(unsigned int cGPass, unsigned int cGFail, unsigned int cIPass
 }
 
 /* returns number of failed atomic tests (doesn't count groups) */
-enum { sweetCONTINUE, sweetPAUSE };
+enum { sweetCONTINUE, sweetPAUSE, sweetPAUSE_FAIL };
 #define PrintTestResults(loop_pause) PrintTestResults_(Sweet_Tests, __COUNTER__, loop_pause)
 SWEET_STATIC int
 PrintTestResults_(test *Tests, unsigned int cTests, int LoopPause)
@@ -258,7 +262,7 @@ PrintTestResults_(test *Tests, unsigned int cTests, int LoopPause)
 		}
 
 		Sweet_Indent(cParents);
-		fprintf(SWEET_OUTFILE, "%s[%c] %s"ANSI_RESET"\n", TestColour, TestStatus,
+		fprintf(SWEET_OUTFILE, "%s[%c] %s" ANSI_RESET "\n", TestColour, TestStatus,
 				Test.Status ? Test.Message : "** test code not hit **");
 
 		iParent = Test.Parent;
@@ -290,7 +294,16 @@ PrintTestResults_(test *Tests, unsigned int cTests, int LoopPause)
 	fputs("\n========\nOverall:\n========\n", SWEET_OUTFILE);
 	Sweet_PrintSummary(cOGPass, cOGFail, cOIPass, cOIFail, cMissed);
 	fputc('\n', SWEET_OUTFILE);
-	while(LoopPause);
+
+	switch(LoopPause)
+	{
+		case sweetPAUSE:
+			while(1);
+		break;
+		case sweetPAUSE_FAIL:
+			while(!!cOIFail);
+		break;
+	}
 	return cOIFail;
 }
 
